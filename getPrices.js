@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer-extra");
 const pluginStealth = require("puppeteer-extra-plugin-stealth");
 const { countries } = require("./countries");
 const { buildHtmlTable } = require("./buildHtmlTable");
-const { failedToFetch , getCurrencyRates, withRetries } = require("./utils");
+const { failedToFetch, getCurrencyRates, withRetries } = require("./utils");
 const { fetch } = require("./fetch");
 const fs = require("fs");
 
@@ -45,7 +45,11 @@ puppeteer
       let result = failedToFetch(country);
       const page = await browser.newPage();
       try {
-        result = await withRetries(() => fetch(outDir, country, page, rates), 4, 15000);
+        result = await withRetries(
+          () => fetch(outDir, country, page, rates),
+          4,
+          15000,
+        );
       } catch (e) {}
       await page.close();
 
@@ -61,7 +65,7 @@ puppeteer
           ? v.price
           : v.kind === "not_available"
           ? Number.MAX_VALUE / 2
-          : Number.MAX_VALUE
+          : Number.MAX_VALUE;
 
       const res = score(v1) - score(v2);
       return res === 0 ? v1.country.localeCompare(v2.country) : res;

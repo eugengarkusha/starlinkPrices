@@ -1,4 +1,4 @@
-const { notAvailable, available  } = require("./utils");
+const { notAvailable, available } = require("./utils");
 module.exports = {
   fetch: async (outDir, country, page, rates) => {
     // Set page view

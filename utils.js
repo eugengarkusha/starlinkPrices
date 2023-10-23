@@ -9,21 +9,20 @@ module.exports = {
     currency,
     price,
   }),
-  sleep : (ms) => new Promise((r) => setTimeout(r, ms)),
-  withRetries: async (f, retries, pauseMs, e) => {
-    if (retries === 0)
-      if (e) {
-        throw e;
-      } else {
-        throw new Error(`retries exceeded`);
-      }
-    else {
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  withRetries: async (f, attempts, pauseMs, e) => {
+    if (attempts === 0) {
+      throw e || new Error(`retries exceeded`);
+    } else {
       try {
         return await f();
       } catch (e) {
-        console.log(`retrying after ${pauseMs} millis, err:${e}`);
+        const attemptsLeft = attempts - 1;
+        console.log(
+          `retrying after ${pauseMs} millis, err:${e}. Attempts left = ${attemptsLeft}`,
+        );
         await module.exports.sleep(pauseMs);
-        return await withRetries(f, retries - 1, pauseMs, e);
+        return await module.exports.withRetries(f, attemptsLeft, pauseMs, e);
       }
     }
   },
@@ -72,4 +71,3 @@ module.exports = {
     }
   },
 };
-
