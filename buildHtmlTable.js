@@ -38,6 +38,10 @@ th, td {
   <a href="https://www.starlink.com/">starlink.com</a>
 </div>
 <div>
+  <div class="inline-div">Currency rates are sourced from&nbsp</div>
+  <a href="https://freecurrencyapi.com/">freecurrencyapi.com</a>
+</div>
+<div>
   <div class="inline-div">Parser is&nbsp</div>
   <a href="https://github.com/eugengarkusha/starlinkPrices">here</a>
 </div>
