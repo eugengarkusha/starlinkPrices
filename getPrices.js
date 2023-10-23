@@ -12,6 +12,15 @@ const currencyApiKey =
     throw new Error("missing CURRENCY_API_KEY");
   })();
 
+const notAvailable = (country) => ({ kind: "not_available", country });
+const failedToFetch = (country) => ({ kind: "failed_to_fetch", country });
+const available = (country, currency, price) => ({
+  kind: "available",
+  country,
+  currency,
+  price,
+});
+
 console.log("countries=" + countries);
 console.log("outDir=" + outDir);
 
@@ -86,7 +95,7 @@ async function test(country, page, rates) {
   console.log(page.url());
   // if failed to navigate to orders
   if (page.url().match("/deposit")) {
-    return "not available";
+    return notAvailable(country);
   } else if (!page.url().match("/orders")) {
     const error = await page
       .waitForSelector("h3[aria-describedby='error-message']", {
@@ -99,7 +108,7 @@ async function test(country, page, rates) {
       .waitForSelector("p[class='ng-star-inserted']", { timeout: 3000 })
       .then((msg) => msg.evaluate((el) => el.textContent))
       .catch((e) => undefined);
-    if (txt && txt.match("not available")) return "not available";
+    if (txt && txt.match("not available")) return notAvailable(country);
     else throw new Error("failed to route to /orders page for unknown reason");
   }
   await page.screenshot({
@@ -141,7 +150,7 @@ async function test(country, page, rates) {
 
     const [_all, currency, amount] = /([A-Z]{3}|£|\$|€)(\d+,?\d*)/.exec(price);
     const rate = rates[currency];
-    const clenAmount = amount.replace(",", "");
+    const clenAmount = amount.replaceAll(",", "");
     const newPrice = rate
       ? Math.round(clenAmount / rate)
       : Math.round(clenAmount * 1);
@@ -153,7 +162,7 @@ async function test(country, page, rates) {
     }
   }
 
-  return { currency: currencyRes, price: priceRes };
+  return available(country, currencyRes, priceRes);
 }
 async function getRates() {
   const base_currency = "EUR";
@@ -218,7 +227,7 @@ puppeteer
     let results = [];
     for (const country of countries) {
       console.log(`processing country ${country}`);
-      let result = "failed to fetch";
+      let result = failedToFetch(country);
       const page = await browser.newPage();
       try {
         result = await withRetries(() => test(country, page, rates), 2, 10000);
@@ -226,12 +235,22 @@ puppeteer
       await page.close();
 
       if (result === undefined) throw new Error("unexpected undefined value");
-      result.country = country;
       console.log(`result = ${JSON.stringify(result, undefined, 4)}`);
       results.push(result);
     }
 
-    results.sort((v1, v2) => v1.price - v2.price);
+    results.sort((v1, v2) => {
+      const res =
+        v1.kind !== "available" && v2.kind !== "available"
+          ? 0
+          : v1.kind === "available" && v2.kind !== "available"
+          ? 1
+          : v1.kind !== "available" && v2.kind === "available"
+          ? -1
+          : v1.price - v2.price;
+
+      res === 0 ? v1.country.localeCompare(v2.country) : res;
+    });
 
     const resStr = JSON.stringify(results, undefined, 4);
     console.log("results=" + resStr);

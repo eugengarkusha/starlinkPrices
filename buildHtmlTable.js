@@ -46,9 +46,16 @@ th, td {
 `,
 };
 
-const buldRow = (v) => `
+const buldRow = (v) => {
+  const value =
+    v.kind === "available"
+      ? `${v.currency}${v.price}`
+      : v.kind.replaceAll("_", " ");
+
+  return `
 <tr>
    <td>${v.country}</td>
-   <td>${v.currency}${v.price}</td>
+   <td>${value}</td>
 </tr>
 `;
+};
