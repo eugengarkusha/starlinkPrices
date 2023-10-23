@@ -1,6 +1,6 @@
 const { notAvailable, available  } = require("./utils");
 module.exports = {
-  test: async (outDir, country, page, rates) => {
+  fetch: async (outDir, country, page, rates) => {
     // Set page view
     await page.setViewport({ width: 1280, height: 720 });
 

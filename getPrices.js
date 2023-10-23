@@ -3,7 +3,7 @@ const pluginStealth = require("puppeteer-extra-plugin-stealth");
 const { countries } = require("./countries");
 const { buildHtmlTable } = require("./buildHtmlTable");
 const { failedToFetch , getCurrencyRates, withRetries } = require("./utils");
-const { test } = require("./test");
+const { fetch } = require("./fetch");
 const fs = require("fs");
 
 const outDir = process.env.OUT_DIR || ".";
@@ -45,7 +45,7 @@ puppeteer
       let result = failedToFetch(country);
       const page = await browser.newPage();
       try {
-        result = await withRetries(() => test(outDir, country, page, rates), 4, 15000);
+        result = await withRetries(() => fetch(outDir, country, page, rates), 4, 15000);
       } catch (e) {}
       await page.close();
 
