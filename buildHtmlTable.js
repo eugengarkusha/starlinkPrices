@@ -53,7 +53,7 @@ th, td {
 const buldRow = (v) => {
   const value =
     v.kind === "available"
-      ? `${v.currency}${v.price}`
+      ? `${v.currency}${v.price}${v.isRefurbed ? "(Refurbished)" : ""}`
       : v.kind.replaceAll("_", " ");
 
   return `

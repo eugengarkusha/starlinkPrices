@@ -80,7 +80,7 @@ module.exports = {
             page.evaluate(
               (el) =>
                 el.previousElementSibling.textContent.match("Refurb")
-                  ? el.textContent
+                  ? el.textContent + "Refurbished"
                   : undefined,
               element,
             ),
@@ -101,12 +101,10 @@ module.exports = {
 
     let priceRes = undefined;
     let currencyRes = "€";
+    let isRefurbed = false;
     for (const price of price_elements) {
-      console.log("price=" + price);
-
-      const [_all, currency, amount] = /([A-Z]{3}|£|\$|€)(\d+,?\d*)/.exec(
-        price,
-      );
+      const [_all, currency, amount, refurb] =
+        /([A-Z]{3}|£|\$|€)(\d+,?\d*)(Refurbished)?/.exec(price);
       const rate = rates[currency];
       const clenAmount = amount.replaceAll(",", "");
       const newPrice = rate
@@ -117,9 +115,10 @@ module.exports = {
 
       if (priceRes === undefined || newPrice < priceRes) {
         priceRes = newPrice;
+        isRefurbed = Boolean(refurb);
       }
     }
 
-    return available(country, currencyRes, priceRes);
+    return available(country, currencyRes, priceRes, isRefurbed);
   },
 };

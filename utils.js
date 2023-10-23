@@ -3,11 +3,12 @@ const https = require("https");
 module.exports = {
   notAvailable: (country) => ({ kind: "not_available", country }),
   failedToFetch: (country) => ({ kind: "failed_to_fetch", country }),
-  available: (country, currency, price) => ({
+  available: (country, currency, price, isRefurbed) => ({
     kind: "available",
     country,
     currency,
     price,
+    isRefurbed,
   }),
   sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
   withRetries: async (f, attempts, pauseMs, e) => {
