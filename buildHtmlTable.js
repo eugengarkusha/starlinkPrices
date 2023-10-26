@@ -3,6 +3,7 @@ module.exports = {
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" href="data:,">
 <meta charset="utf-8">
 <style>
 .inline-div {
