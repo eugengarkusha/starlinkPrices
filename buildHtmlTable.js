@@ -26,13 +26,13 @@ th, td {
 </style>
 </head>
 <body>
-<div>updated at: ${timestamp}</div>
+<div>updated at: ${timestamp.toUTCString()}</div>
 <table>
     <tr>
         <th>Country</th>
         <th>Terminal price</th>
     </tr>
-    ${data.map((v) => buldRow(v)).join("\n")}
+    ${data.map(([country, v]) => buildRow(country, v)).join("\n")}
 </table>
 <div>
   <div class="inline-div">Data is sourced from&nbsp</div>
@@ -46,12 +46,16 @@ th, td {
   <div class="inline-div">Parser is&nbsp</div>
   <a href="https://github.com/eugengarkusha/starlinkPrices">here</a>
 </div>
+<div>
+  <div class="inline-div">Support&nbsp</div>
+  <a href="https://t.me/bnuex">@bnuex</a>
+</div>
 <div>PRs are welcome</div>
 </body>
 `,
 };
 
-const buldRow = (v) => {
+const buildRow = (country, v) => {
   const value =
     v.kind === "available"
       ? `${v.currency}${v.price}${v.isRefurbed ? "(Refurbished)" : ""}`
@@ -59,7 +63,7 @@ const buldRow = (v) => {
 
   return `
 <tr>
-   <td>${v.country}</td>
+   <td>${country}</td>
    <td>${value}</td>
 </tr>
 `;

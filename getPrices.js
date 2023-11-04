@@ -1,8 +1,20 @@
 const puppeteer = require("puppeteer-extra");
 const pluginStealth = require("puppeteer-extra-plugin-stealth");
 const { countries } = require("./countries");
+const {
+  mergeHistory,
+  buildFileDir,
+  buildFileName,
+  fetchPastNResults,
+} = require("./history");
 const { buildHtmlTable } = require("./buildHtmlTable");
-const { failedToFetch, getCurrencyRates, withRetries } = require("./utils");
+const {
+  failedToFetch,
+  getCurrencyRates,
+  withRetries,
+  createDirIfNotExists,
+  yesterday,
+} = require("./utils");
 const { fetch } = require("./fetch");
 const fs = require("fs");
 
@@ -39,10 +51,10 @@ puppeteer
     const rates = await getCurrencyRates(currencyApiKey);
     console.log("rates=" + JSON.stringify(rates, undefined, 4));
 
-    let results = [];
+    let results = {};
     for (const country of countries) {
       console.log(`processing country ${country}`);
-      let result = failedToFetch(country);
+      let result = failedToFetch;
       const page = await browser.newPage();
       try {
         result = await withRetries(
@@ -55,11 +67,25 @@ puppeteer
 
       if (result === undefined) throw new Error("unexpected undefined value");
       console.log(`result = ${JSON.stringify(result, undefined, 4)}`);
-      results.push(result);
+      results[country] = result;
     }
 
+    const now = new Date();
+
+    const resStr = JSON.stringify(results, undefined, 4);
+    console.log("results=" + resStr);
+    const fileDir = buildFileDir(outDir, now);
+    createDirIfNotExists(fileDir);
+    fs.writeFileSync(`${fileDir}/${buildFileName(now)}`, resStr);
+
+    const lastNRes = fetchPastNResults(outDir, 30, yesterday(now))
+    console.log("lastNRes="+JSON.stringify(lastNRes))
+    const mergedResult = Object.entries(
+      mergeHistory([results, ...lastNRes]),
+    );
+
     // sort by price ASC, not_available wins over failed_to_fetch, fallback to lex sort on country
-    results.sort((v1, v2) => {
+    mergedResult.sort(([country1, v1], [country2, v2]) => {
       const score = (v) =>
         v.kind === "available"
           ? v.price
@@ -68,27 +94,17 @@ puppeteer
           : Number.MAX_VALUE;
 
       const res = score(v1) - score(v2);
-      return res === 0 ? v1.country.localeCompare(v2.country) : res;
+      return res === 0 ? country1.localeCompare(country2) : res;
     });
 
-    const resStr = JSON.stringify(results, undefined, 4);
-    console.log("results=" + resStr);
-    fs.writeFile(`${outDir}/result.json`, resStr, (err) => {
-      if (err) {
-        console.error(err);
-      }
-    });
-
-    fs.writeFile(
+    console.log("mergedResult=" + JSON.stringify(mergedResult));
+    fs.writeFileSync(
       `${outDir}/result.html`,
-      buildHtmlTable(results, new Date().toUTCString()),
-      (err) => {
-        if (err) {
-          console.error(err);
-        }
-      },
+      buildHtmlTable(mergedResult, new Date()),
     );
 
     // Close the browser
     await browser.close();
   });
+
+//TODO: diff updates: dont update when price diff is < 20

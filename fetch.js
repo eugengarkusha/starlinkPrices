@@ -19,9 +19,11 @@ module.exports = {
 
     const countryXpath = `//span[contains(., '${country}')]`;
     await page.waitForXPath(countryXpath);
+
     await page.screenshot({
       path: `${outDir}/${country}_image_after_open_dropdown.png`,
     });
+
     const dropdownItems = await page.$x(countryXpath);
 
     if (dropdownItems[0]) {
@@ -47,7 +49,7 @@ module.exports = {
     console.log(page.url());
     // if failed to navigate to orders
     if (page.url().match("/deposit")) {
-      return notAvailable(country);
+      return notAvailable;
     } else if (!page.url().match("/orders")) {
       const error = await page
         .waitForSelector("h3[aria-describedby='error-message']", {
@@ -60,7 +62,7 @@ module.exports = {
         .waitForSelector("p[class='ng-star-inserted']", { timeout: 3000 })
         .then((msg) => msg.evaluate((el) => el.textContent))
         .catch((e) => undefined);
-      if (txt && txt.match("not available")) return notAvailable(country);
+      if (txt && txt.match("not available")) return notAvailable;
       else
         throw new Error("failed to route to /orders page for unknown reason");
     }
@@ -106,10 +108,10 @@ module.exports = {
       const [_all, currency, amount, refurb] =
         /([A-Z]{3}|£|\$|€)(\d+,?\d*)(Refurbished)?/.exec(price);
       const rate = rates[currency];
-      const clenAmount = amount.replaceAll(",", "");
+      const cleanAmount = amount.replaceAll(",", "");
       const newPrice = rate
-        ? Math.round(clenAmount / rate)
-        : Math.round(clenAmount * 1);
+        ? Math.round(cleanAmount / rate)
+        : Math.round(cleanAmount * 1);
       // assuming that all price option have same currency
       if (!rate) currencyRes = currency;
 
@@ -119,6 +121,6 @@ module.exports = {
       }
     }
 
-    return available(country, currencyRes, priceRes, isRefurbed);
+    return available(currencyRes, priceRes, isRefurbed);
   },
 };
