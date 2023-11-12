@@ -2,8 +2,6 @@ const { notAvailable, available } = require("./utils");
 const _ = require("lodash");
 module.exports = {
   fetch: async (outDir, country, page, rates, now) => {
-    // Set page view
-    await page.setViewport({ width: 1280, height: 720 });
 
     // navigate to the website
     await page.goto("https://www.starlink.com/");

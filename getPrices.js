@@ -68,7 +68,10 @@ puppeteer
         try {
           result = await withRetries(
             async () => {
-              if (!page || page.isClosed()) page = await browser.newPage();
+              if (!page || page.isClosed()) {
+                page = await browser.newPage();
+                await page.setViewport({ width: 1280, height: 720 });
+              }
               return await fetch(outDir, country, page, rates, now);
             },
             3,
