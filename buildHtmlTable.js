@@ -1,5 +1,7 @@
+const { truncateToDay } = require("./utils");
+
 module.exports = {
-  buildHtmlTable: (data, timestamp) => `
+  buildHtmlTable: (countryValues, updatedAt) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -26,13 +28,15 @@ th, td {
 </style>
 </head>
 <body>
-<div>updated at: ${timestamp.toUTCString()}</div>
+<div>updated at: ${updatedAt.toUTCString()}</div>
 <table>
     <tr>
         <th>Country</th>
         <th>Terminal price</th>
     </tr>
-    ${data.map(([country, v]) => buildRow(country, v)).join("\n")}
+    ${countryValues
+      .map(([country, v]) => buildRow(country, v, updatedAt))
+      .join("\n")}
 </table>
 <div>
   <div class="inline-div">Data is sourced from&nbsp</div>
@@ -55,16 +59,24 @@ th, td {
 `,
 };
 
-const buildRow = (country, v) => {
+const buildRow = (country, v, updatedAt) => {
+  const isUpdatedEarlier =
+    truncateToDay(new Date(v.timestamp)).getTime() !==
+    truncateToDay(updatedAt).getTime();
+  const labels = [
+    v.isRefurbed && "Refurbished",
+    isUpdatedEarlier && `updated at: ${new Date(v.timestamp).toUTCString()}`,
+  ].filter(Boolean);
+
   const value =
     v.kind === "available"
-      ? `${v.currency}${v.price}${v.isRefurbed ? "(Refurbished)" : ""}`
+      ? `${v.convertedCurrency}${v.convertedPrice}`
       : v.kind.replaceAll("_", " ");
 
   return `
 <tr>
    <td>${country}</td>
-   <td>${value}</td>
+   <td>${value}${labels.length !== 0 ? `(${labels.join(",")})` : ""}</td>
 </tr>
 `;
 };

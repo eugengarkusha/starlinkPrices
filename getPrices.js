@@ -1,11 +1,14 @@
 const puppeteer = require("puppeteer-extra");
 const pluginStealth = require("puppeteer-extra-plugin-stealth");
 const { countries } = require("./countries");
+const _ = require("lodash");
 const {
   mergeHistory,
   buildFileDir,
   buildFileName,
   getPastNResults,
+  saveLastResult,
+  getDiff,
 } = require("./history");
 const { buildHtmlTable } = require("./buildHtmlTable");
 const {
@@ -19,6 +22,12 @@ const { fetch } = require("./fetch");
 const fs = require("fs");
 
 const outDir = process.env.OUT_DIR || ".";
+
+// how to get tgChatId:
+// send message /my_id @bot_username in the group
+// https://api.telegram.org/bot${key}/getUpdates - see chat id response
+const tgChatId = process.env.TG_CHAT_ID;
+const apiKey = process.env.TG_BOT_API_KEY;
 const currencyApiKey =
   process.env.CURRENCY_API_KEY ||
   (() => {
@@ -30,6 +39,7 @@ console.log("outDir=" + outDir);
 
 //save to executable path
 const { executablePath } = require("puppeteer");
+const { sendTelegramUpdate } = require("./telegramUpdates");
 
 // Use stealth
 puppeteer.use(pluginStealth());
@@ -53,17 +63,27 @@ puppeteer
 
     let results = {};
     for (const country of countries) {
+      const now = new Date();
       console.log(`processing country ${country}`);
-      let result = failedToFetch;
-      const page = await browser.newPage();
+      let result = failedToFetch(now);
       try {
         result = await withRetries(
-          () => fetch(outDir, country, page, rates),
-          4,
+          async () => {
+            const page = await browser.newPage();
+            const res = await fetch(outDir, country, page, rates, now);
+            try {
+              await page.close();
+            } catch (e) {
+              console.log(`Failed to close page, ${e}`);
+            }
+            return res;
+          },
+          3,
           15000,
         );
-      } catch (e) {}
-      await page.close();
+      } catch (e) {
+        console.log(`Failed to fetch result for ${country}, ${e}`);
+      }
 
       if (result === undefined) throw new Error("unexpected undefined value");
       console.log(`result = ${JSON.stringify(result, undefined, 4)}`);
@@ -72,20 +92,18 @@ puppeteer
 
     const now = new Date();
 
-    const resStr = JSON.stringify(results, undefined, 4);
-    console.log("results=" + resStr);
-    const fileDir = buildFileDir(outDir, now);
-    createDirIfNotExists(fileDir);
-    fs.writeFileSync(`${fileDir}/${buildFileName(now)}`, resStr);
+    console.log("results=" + JSON.stringify(results, undefined, 4));
+    saveLastResult(outDir, results, now);
 
-    const lastNRes = getPastNResults(outDir, 30, yesterday(now))
-
-    const mergedResult = Object.entries(
-      mergeHistory([results, ...lastNRes]),
+    const mergedPrevResults = mergeHistory(
+      getPastNResults(outDir, 30, yesterday(now)),
+    );
+    const mergedResults = Object.entries(
+      mergeHistory([results, mergedPrevResults]),
     );
 
     // sort by price ASC, not_available wins over failed_to_fetch, fallback to lex sort on country
-    mergedResult.sort(([country1, v1], [country2, v2]) => {
+    mergedResults.sort(([country1, v1], [country2, v2]) => {
       const score = (v) =>
         v.kind === "available"
           ? v.price
@@ -97,12 +115,25 @@ puppeteer
       return res === 0 ? country1.localeCompare(country2) : res;
     });
 
-    console.log("mergedResult=" + JSON.stringify(mergedResult));
-    fs.writeFileSync(
-      `${outDir}/result.html`,
-      buildHtmlTable(mergedResult, new Date()),
+    console.log(
+      `mergedResults = ${JSON.stringify(mergedResults, undefined, 4)}`,
     );
 
+    fs.writeFileSync(
+      `${outDir}/result.html`,
+      buildHtmlTable(mergedResults, now),
+    );
+
+    if (apiKey && tgChatId)
+      await sendTelegramUpdate(
+        apiKey,
+        tgChatId,
+        getDiff(mergedPrevResults, results),
+      );
+    else
+      console.log(
+        "skipping tg updates, TG_BOT_API_KEY or TG_BOT_API_KEY env var is not defined",
+      );
     // Close the browser
     await browser.close();
   });

@@ -32,7 +32,7 @@ module.exports = {
     // "Montenegro",
     // "Netherlands",
     // "Norway",
-    // "Poland",
+    "Poland",
     // "Portugal",
     // "Romania",
     // "San Marino",
