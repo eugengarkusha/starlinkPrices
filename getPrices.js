@@ -58,32 +58,35 @@ puppeteer
     console.log("rates=" + JSON.stringify(rates, undefined, 4));
 
     let results = {};
-    for (const country of countries) {
-      const now = new Date();
-      console.log(`processing country ${country}`);
-      let result = failedToFetch(now);
-      try {
-        result = await withRetries(
-          async () => {
-            const page = await browser.newPage();
-            const res = await fetch(outDir, country, page, rates, now);
-            try {
-              await page.close();
-            } catch (e) {
-              console.log(`Failed to close page, ${e}`);
-            }
-            return res;
-          },
-          5,
-          30000,
-        );
-      } catch (e) {
-        console.log(`Failed to fetch result for ${country}, ${e}`);
+    // reusing one page for all countries (looks like it reduces cpu load)
+    let page = undefined;
+    try {
+      for (const country of countries) {
+        const now = new Date();
+        console.log(`processing country ${country}`);
+        let result = failedToFetch(now);
+        try {
+          result = await withRetries(
+            async () => {
+              if (!page || page.isClosed()) page = await browser.newPage();
+              return await fetch(outDir, country, page, rates, now);
+            },
+            3,
+            15000,
+          );
+        } catch (e) {
+          console.log(`Failed to fetch result for ${country}, ${e}`);
+        }
+        if (result === undefined) throw new Error("unexpected undefined value");
+        console.log(`result = ${JSON.stringify(result, undefined, 4)}`);
+        results[country] = result;
       }
-
-      if (result === undefined) throw new Error("unexpected undefined value");
-      console.log(`result = ${JSON.stringify(result, undefined, 4)}`);
-      results[country] = result;
+    } finally {
+      try {
+        await page?.close();
+      } catch (e) {
+        console.log(`Failed to close page, ${e}`);
+      }
     }
 
     const now = new Date();
@@ -133,5 +136,3 @@ puppeteer
     // Close the browser
     await browser.close();
   });
-
-//TODO: diff updates: dont update when price diff is < 20

@@ -18,7 +18,7 @@ npm run start
 ```
 docker build . --tag getprices:latest --progress plain
 mkdir ./out
-docker run --rm -it --init \ 
+docker run --rm -it --init \
            --mount type=bind,source="$(pwd)"/out,target=/out \
            -e "OUT_DIR=/out" \
            -e "CURRENCY_API_KEY=***" \
