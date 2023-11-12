@@ -36,31 +36,30 @@ th, td {
     </tr>
     ${countryValues
       .map(([country, v]) => buildRow(country, v, updatedAt))
-      .join("\n")}
+      .join("")}
 </table>
 
 <div>
-  <div class="inline-div">Live updates&nbsp</div>
+  <div class="inline-div">Live updates </div>
   <a href="https://t.me/starlink_price_updates">@starlink_price_updates</a>
 </div>
 <div>
-  <div class="inline-div">Support&nbsp</div>
+  <div class="inline-div">Support </div>
   <a href="https://t.me/bnuex">@bnuex</a>
 </div>
 <div>
-  <div class="inline-div">Source code is&nbsp</div>
+  <div class="inline-div">Source code is </div>
   <a href="https://github.com/eugengarkusha/starlinkPrices">here</a>
+  <div class="inline-div">, PRs are welcome</div>
 </div>
 <div>
-  <div class="inline-div">Data is sourced from&nbsp</div>
+  <div class="inline-div">Data is sourced from </div>
   <a href="https://www.starlink.com/">starlink.com</a>
 </div>
 <div>
-  <div class="inline-div">Currency rates are sourced from&nbsp</div>
+  <div class="inline-div">Currency rates are sourced from </div>
   <a href="https://freecurrencyapi.com/">freecurrencyapi.com</a>
 </div>
-
-<div>PRs are welcome</div>
 </body>
 `,
 };
