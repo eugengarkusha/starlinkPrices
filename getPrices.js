@@ -4,8 +4,6 @@ const { countries } = require("./countries");
 const _ = require("lodash");
 const {
   mergeHistory,
-  buildFileDir,
-  buildFileName,
   getPastNResults,
   saveLastResult,
   getDiff,
@@ -15,7 +13,6 @@ const {
   failedToFetch,
   getCurrencyRates,
   withRetries,
-  createDirIfNotExists,
   yesterday,
 } = require("./utils");
 const { fetch } = require("./fetch");
