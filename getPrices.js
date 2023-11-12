@@ -5,7 +5,7 @@ const {
   mergeHistory,
   buildFileDir,
   buildFileName,
-  fetchPastNResults,
+  getPastNResults,
 } = require("./history");
 const { buildHtmlTable } = require("./buildHtmlTable");
 const {
@@ -78,8 +78,8 @@ puppeteer
     createDirIfNotExists(fileDir);
     fs.writeFileSync(`${fileDir}/${buildFileName(now)}`, resStr);
 
-    const lastNRes = fetchPastNResults(outDir, 30, yesterday(now))
-    console.log("lastNRes="+JSON.stringify(lastNRes))
+    const lastNRes = getPastNResults(outDir, 30, yesterday(now))
+
     const mergedResult = Object.entries(
       mergeHistory([results, ...lastNRes]),
     );

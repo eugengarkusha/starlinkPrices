@@ -39,14 +39,17 @@ module.exports = {
       return `${basePath}/results/${date.getUTCFullYear()}/${date.getUTCMonth()}`
   },
   buildFileName(date) { return date.getUTCDate() + ".json"},
-  // returns results ordered form by date desc
-  fetchPastNResults (basePath, n, fromDate)  {
+  // returns results ordered form by date desc, fromDate is included
+  getPastNResults (basePath, n, fromDate)  {
     results = [];
     for (let i = n, date = fromDate; i > 0; i--, date = yesterday(date)) {
       const path = [self.buildFileDir(basePath, date), self.buildFileName(date)].join(
         "/",
       );
+      fs.cure
+      console.log("path="+path)
       if (fs.existsSync(path)) {
+          console.log("pathExists!!")
         results.push(JSON.parse(fs.readFileSync(path).toString()));
       }
     }
