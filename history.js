@@ -4,8 +4,7 @@ const { yesterday } = require("./utils");
 const path = require("path");
 module.exports = {
   getDiff (prev, next)  {
-    console.log("prev="+ JSON.stringify(prev))
-    const countries = [...Object.keys(prev), ...Object.keys(next)];
+    const countries = _.uniq([...Object.keys(prev), ...Object.keys(next)]);
     return countries
       .map((country) => {
         const prevVal = prev[country];

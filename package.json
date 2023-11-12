@@ -10,6 +10,10 @@
   },
   "scripts": {
     "start": "node getPrices.js",
-    "prettier": "prettier . --write"
+    "prettier": "prettier . --write",
+    "test" : "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
