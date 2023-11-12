@@ -46,7 +46,7 @@ module.exports = {
       await button.click();
     } else throw new Error("cant click ORDER button");
 
-    await page.waitForNavigation().catch((e) => 0);
+    await page.waitForNavigation().catch(() => 0);
     console.log(page.url());
     // if failed to navigate to orders
     if (page.url().match("/deposit")) {
@@ -57,12 +57,12 @@ module.exports = {
           timeout: 3000,
         })
         .then((msg) => msg.evaluate((el) => el.textContent))
-        .catch((e) => undefined);
+        .catch(() => undefined);
       if (error) throw new Error(`Error when clicking 'order': ${error}`);
       const txt = await page
         .waitForSelector("p[class='ng-star-inserted']", { timeout: 3000 })
         .then((msg) => msg.evaluate((el) => el.textContent))
-        .catch((e) => undefined);
+        .catch(() => undefined);
       if (txt && txt.match("not available")) return notAvailable(now);
       else
         throw new Error("failed to route to /orders page for unknown reason");

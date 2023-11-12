@@ -1,7 +1,6 @@
 const puppeteer = require("puppeteer-extra");
 const pluginStealth = require("puppeteer-extra-plugin-stealth");
 const { countries } = require("./countries");
-const _ = require("lodash");
 const {
   mergeHistory,
   getPastNResults,

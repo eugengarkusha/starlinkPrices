@@ -43,7 +43,7 @@ const sendTgMsg = async (botToken, chatId, rawText) => {
   const text = encodeURIComponent(rawText);
 
   await new Promise((resolve, reject) => {
-    const req = https
+    https
       .get(
         `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${text}`,
         (res) => {

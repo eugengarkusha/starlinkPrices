@@ -1,7 +1,6 @@
 const _ = require("lodash");
 const fs = require("fs");
 const { yesterday, createDirIfNotExists } = require("./utils");
-const path = require("path");
 module.exports = {
   // finds non-equal objects by structural equality, ignoring timestamp, converted currency and converted price
   getDiff(prev, next) {

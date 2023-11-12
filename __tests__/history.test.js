@@ -131,7 +131,6 @@ test("getDiff: finds non-equal objects by structural equality, ignoring timestam
 });
 
 test("getPastNResults: handle year and month change, empty dates are ignored", () => {
-  const jan1_2024 = new Date(2024, 0, 1, 11, 11, 11);
   const fetched = getPastNResults(__dirname, 99, jan2_2023);
   expect(fetched).toEqual([
     { 2023: "Jan2" },
