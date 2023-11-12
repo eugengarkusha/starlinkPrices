@@ -107,11 +107,10 @@ puppeteer
     // sort by price ASC, not_available wins over failed_to_fetch, fallback to lex sort on country
     mergedResults.sort(([country1, v1], [country2, v2]) => {
       const score = (v) =>
+        // prettier-ignore
         v.kind === "available"
-          ? v.price
-          : v.kind === "not_available"
-          ? Number.MAX_VALUE / 2
-          : Number.MAX_VALUE;
+          ? (v.convertedCurrency === "€" ? v.convertedPrice : Number.MAX_VALUE / 3)
+          : (v.kind === "not_available" ? Number.MAX_VALUE / 2 : Number.MAX_VALUE);
 
       const res = score(v1) - score(v2);
       return res === 0 ? country1.localeCompare(country2) : res;
