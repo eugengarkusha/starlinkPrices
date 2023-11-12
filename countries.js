@@ -45,8 +45,8 @@ module.exports = {
     "Turkey",
     "USA",
     "Canada",
-    "Mexico",
     "Ukraine",
     "United Kingdom",
+    //  "Mexico"
   ],
 };

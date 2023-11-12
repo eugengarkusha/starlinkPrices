@@ -1,14 +1,24 @@
 const https = require("https");
+const fs = require("fs");
 
 module.exports = {
-  notAvailable: (country) => ({ kind: "not_available", country }),
-  failedToFetch: (country) => ({ kind: "failed_to_fetch", country }),
-  available: (country, currency, price, isRefurbed) => ({
-    kind: "available",
-    country,
+  notAvailable: (timestamp) => ({ kind: "not_available", timestamp }),
+  failedToFetch: (timestamp) => ({ kind: "failed_to_fetch", timestamp }),
+  available: (
     currency,
     price,
+    convertedCurrency,
+    convertedPrice,
     isRefurbed,
+    timestamp,
+  ) => ({
+    kind: "available",
+    currency,
+    price,
+    convertedCurrency,
+    convertedPrice,
+    isRefurbed,
+    timestamp,
   }),
   sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
   withRetries: async (f, attempts, pauseMs, e) => {
@@ -66,9 +76,21 @@ module.exports = {
       rates.data["£"] = rates.data["GBP"];
       rates.data["$"] = rates.data["USD"];
       rates.data["CA$"] = rates.data["CAD"];
-      // TODO: use currency service that supports MKD
-      rates.data["MKD"] = 61.61;
+      // TODO: freecurrencyapi.com does not support these
+      rates.data["MKD"] = 61.5; // Macedonia
+      rates.data["GEL"] = 2.88; // Georgia
       return rates.data;
+    }
+  },
+  truncateToDay: (date) =>
+    new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  yesterday: function (date) {
+    return new Date(date.getTime() - module.exports.oneDayMillis);
+  },
+  oneDayMillis: 24 * 60 * 60 * 1000,
+  createDirIfNotExists: (path) => {
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path, { recursive: true });
     }
   },
 };

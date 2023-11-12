@@ -1,5 +1,7 @@
+const { truncateToDay } = require("./utils");
+
 module.exports = {
-  buildHtmlTable: (data, timestamp) => `
+  buildHtmlTable: (countryValues, updatedAt) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -26,14 +28,29 @@ th, td {
 </style>
 </head>
 <body>
-<div>updated at: ${timestamp}</div>
+<div>updated at: ${updatedAt.toUTCString()}</div>
 <table>
     <tr>
         <th>Country</th>
         <th>Terminal price</th>
     </tr>
-    ${data.map((v) => buldRow(v)).join("\n")}
+    ${countryValues
+      .map(([country, v]) => buildRow(country, v, updatedAt))
+      .join("\n")}
 </table>
+
+<div>
+  <div class="inline-div">Live updates&nbsp</div>
+  <a href="https://t.me/starlink_price_updates">@starlink_price_updates</a>
+</div>
+<div>
+  <div class="inline-div">Support&nbsp</div>
+  <a href="https://t.me/bnuex">@bnuex</a>
+</div>
+<div>
+  <div class="inline-div">Source code is&nbsp</div>
+  <a href="https://github.com/eugengarkusha/starlinkPrices">here</a>
+</div>
 <div>
   <div class="inline-div">Data is sourced from&nbsp</div>
   <a href="https://www.starlink.com/">starlink.com</a>
@@ -42,25 +59,30 @@ th, td {
   <div class="inline-div">Currency rates are sourced from&nbsp</div>
   <a href="https://freecurrencyapi.com/">freecurrencyapi.com</a>
 </div>
-<div>
-  <div class="inline-div">Parser is&nbsp</div>
-  <a href="https://github.com/eugengarkusha/starlinkPrices">here</a>
-</div>
+
 <div>PRs are welcome</div>
 </body>
 `,
 };
 
-const buldRow = (v) => {
+const buildRow = (country, v, updatedAt) => {
+  const isUpdatedEarlier =
+    truncateToDay(new Date(v.timestamp)).getTime() !==
+    truncateToDay(updatedAt).getTime();
+  const labels = [
+    v.isRefurbed && "Refurbished",
+    isUpdatedEarlier && `updated at: ${new Date(v.timestamp).toUTCString()}`,
+  ].filter(Boolean);
+
   const value =
     v.kind === "available"
-      ? `${v.currency}${v.price}${v.isRefurbed ? "(Refurbished)" : ""}`
+      ? `${v.convertedCurrency}${v.convertedPrice}`
       : v.kind.replaceAll("_", " ");
 
   return `
 <tr>
-   <td>${v.country}</td>
-   <td>${value}</td>
+   <td>${country}</td>
+   <td>${value}${labels.length !== 0 ? `(${labels.join(",")})` : ""}</td>
 </tr>
 `;
 };

@@ -1,6 +1,7 @@
 const { notAvailable, available } = require("./utils");
+const _ = require("lodash");
 module.exports = {
-  fetch: async (outDir, country, page, rates) => {
+  fetch: async (outDir, country, page, rates, now) => {
     // Set page view
     await page.setViewport({ width: 1280, height: 720 });
 
@@ -19,9 +20,11 @@ module.exports = {
 
     const countryXpath = `//span[contains(., '${country}')]`;
     await page.waitForXPath(countryXpath);
+
     await page.screenshot({
       path: `${outDir}/${country}_image_after_open_dropdown.png`,
     });
+
     const dropdownItems = await page.$x(countryXpath);
 
     if (dropdownItems[0]) {
@@ -43,24 +46,24 @@ module.exports = {
       await button.click();
     } else throw new Error("cant click ORDER button");
 
-    await page.waitForNavigation().catch((e) => 0);
+    await page.waitForNavigation().catch(() => 0);
     console.log(page.url());
     // if failed to navigate to orders
     if (page.url().match("/deposit")) {
-      return notAvailable(country);
+      return notAvailable(now);
     } else if (!page.url().match("/orders")) {
       const error = await page
         .waitForSelector("h3[aria-describedby='error-message']", {
           timeout: 3000,
         })
         .then((msg) => msg.evaluate((el) => el.textContent))
-        .catch((e) => undefined);
+        .catch(() => undefined);
       if (error) throw new Error(`Error when clicking 'order': ${error}`);
       const txt = await page
         .waitForSelector("p[class='ng-star-inserted']", { timeout: 3000 })
         .then((msg) => msg.evaluate((el) => el.textContent))
-        .catch((e) => undefined);
-      if (txt && txt.match("not available")) return notAvailable(country);
+        .catch(() => undefined);
+      if (txt && txt.match("not available")) return notAvailable(now);
       else
         throw new Error("failed to route to /orders page for unknown reason");
     }
@@ -72,7 +75,7 @@ module.exports = {
     await page.waitForSelector(".selected-price");
 
     // searching for refurb price and assuming it is lower then normal price
-    let price_elements = await page
+    let refurbed_price_element = await page
       .$x(`//span[contains(@class, 'option-price')]`)
       .then((els) =>
         Promise.all(
@@ -80,45 +83,46 @@ module.exports = {
             page.evaluate(
               (el) =>
                 el.previousElementSibling.textContent.match("Refurb")
-                  ? el.textContent + "Refurbished"
+                  ? el.textContent
                   : undefined,
               element,
             ),
           ),
-        ).then((arr) => arr.filter(Boolean)),
+        ).then((arr) => arr.filter(Boolean)[0] ?? arr.filter(Boolean)[0]),
       );
-    if (price_elements.length === 0) {
+
+    const getSelectedPriceElement = async () => {
       const element = await page.$(".selected-price");
       const price_element = await page.evaluate(
         (el) => el.textContent,
         element,
       );
       const [_, price] = /and\s+(.+)\s+for hardware/.exec(price_element);
-      price_elements = [price];
-    }
+      return price;
+    };
+
+    const price_element =
+      refurbed_price_element || (await getSelectedPriceElement());
+    const isRefurbed = !_.isUndefined(refurbed_price_element);
 
     await page.screenshot({ path: `${outDir}/${country}_image_final.png` });
 
-    let priceRes = undefined;
-    let currencyRes = "€";
-    let isRefurbed = false;
-    for (const price of price_elements) {
-      const [_all, currency, amount, refurb] =
-        /([A-Z]{3}|£|\$|€)(\d+,?\d*)(Refurbished)?/.exec(price);
-      const rate = rates[currency];
-      const clenAmount = amount.replaceAll(",", "");
-      const newPrice = rate
-        ? Math.round(clenAmount / rate)
-        : Math.round(clenAmount * 1);
-      // assuming that all price option have same currency
-      if (!rate) currencyRes = currency;
+    const [_all, currency, amount] = /([A-Z]{3}|£|\$|€)(\d+,?\d*)?/.exec(
+      price_element,
+    );
+    const rate = rates[currency];
+    const price = amount.replaceAll(",", "") * 1;
+    const convertedPrice = rate ? Math.round(price / rate) : Math.round(price);
+    // assuming that all price option have same currency
+    const convertedCurrency = rate ? "€" : currency;
 
-      if (priceRes === undefined || newPrice < priceRes) {
-        priceRes = newPrice;
-        isRefurbed = Boolean(refurb);
-      }
-    }
-
-    return available(country, currencyRes, priceRes, isRefurbed);
+    return available(
+      currency,
+      price,
+      convertedCurrency,
+      convertedPrice,
+      isRefurbed,
+      now,
+    );
   },
 };
