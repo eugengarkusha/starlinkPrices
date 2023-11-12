@@ -74,8 +74,8 @@ puppeteer
             }
             return res;
           },
-          3,
-          15000,
+          5,
+          30000,
         );
       } catch (e) {
         console.log(`Failed to fetch result for ${country}, ${e}`);
